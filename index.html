@@ -248,6 +248,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             touch-action: none;
         }
+        .control-panel.capture-safe {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            border-color: rgba(0, 0, 0, 0.08) !important;
+        }
         .control-title {
             font-size: 13px;
             font-weight: 700;
@@ -537,11 +543,20 @@
                 toggleTabsBtn.textContent = tabsExpanded ? "收起 Tab 名称" : "展开更多 Tab 名称";
             });
             shotBtn.addEventListener("click", async function () {
+                let prevPanelScrollTop = panel.scrollTop;
+                const prevTransform = panel.style.transform;
+                const prevLeft = panel.style.left;
+                const prevRight = panel.style.right;
                 try {
                     if (!window.html2canvas) {
                         alert("截图库加载失败，请检查网络后重试。");
                         return;
                     }
+                    panel.scrollTop = 0;
+                    panel.classList.add("capture-safe");
+                    panel.style.transform = "none";
+                    panel.style.left = "8px";
+                    panel.style.right = "8px";
                     const viewportWidth = Math.round(window.innerWidth);
                     const viewportHeight = Math.round(window.innerHeight);
                     const outputCanvas = await window.html2canvas(document.documentElement, {
@@ -559,6 +574,11 @@
                         windowWidth: viewportWidth,
                         windowHeight: viewportHeight
                     });
+                    panel.classList.remove("capture-safe");
+                    panel.style.transform = prevTransform;
+                    panel.style.left = prevLeft;
+                    panel.style.right = prevRight;
+                    panel.scrollTop = prevPanelScrollTop;
                     const now = new Date();
                     const stamp = [
                         now.getFullYear(),
@@ -584,6 +604,11 @@
                         }, 1000);
                     }, "image/png");
                 } catch (err) {
+                    panel.classList.remove("capture-safe");
+                    panel.style.transform = prevTransform;
+                    panel.style.left = prevLeft;
+                    panel.style.right = prevRight;
+                    panel.scrollTop = prevPanelScrollTop;
                     const detail = err && err.message ? err.message : String(err);
                     alert("截图失败：" + detail + "。建议通过本地 HTTP 服务打开此页面后再试。");
                 }
@@ -652,7 +677,6 @@
             panel.addEventListener("pointerup", endDrag);
             panel.addEventListener("pointercancel", endDrag);
 
-            phoneEl.appendChild(panel);
             updateTabScrollState();
             updatePanelSize();
             window.addEventListener("resize", updatePanelSize);
